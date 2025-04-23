@@ -1,0 +1,378 @@
+<div class="container mx-auto md:p-8 flex flex-col flex-grow min-h-0">
+  <!-- Added flex flex-col flex-grow min-h-0 -->
+  <!-- Header -->
+  <div class="flex items-center mb-6 flex-shrink-0">
+    <!-- Added flex-shrink-0 -->
+    <img
+      src="https://cdn-icons-png.flaticon.com/512/11378/11378287.png"
+      alt="Flight Icon"
+      class="w-8 h-8 mr-3"
+    />
+    <h2 class="text-2xl font-bold text-gray-800">Search Flights</h2>
+  </div>
+
+  <!-- Form -->
+  <form
+    (ngSubmit)="searchFlights()"
+    class="p-6 bg-white rounded-lg shadow-md space-y-6 border border-gray-200 flex-shrink-0 sticky top-0 z-10"
+  >
+    <!-- ... (form content remains the same) ... -->
+    <div class="flex items-center space-x-4">
+      <label class="text-sm font-medium text-gray-700">Trip Type:</label>
+      <button
+        type="button"
+        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150 ease-in-out"
+        [ngClass]="{
+          'bg-red-600 text-white shadow-sm': tripType === 'one-way',
+          'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300':
+            tripType !== 'one-way'
+        }"
+        (click)="tripType = 'one-way'"
+      >
+        One Way
+      </button>
+      <button
+        type="button"
+        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-150 ease-in-out"
+        [ngClass]="{
+          'bg-red-600 text-white shadow-sm': tripType === 'round-trip',
+          'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300':
+            tripType !== 'round-trip'
+        }"
+        (click)="tripType = 'round-trip'"
+      >
+        Round Trip
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+      <div class="space-y-1">
+        <label for="from" class="block text-sm font-medium text-gray-700"
+          >From</label
+        >
+        <select
+          id="from"
+          [(ngModel)]="from"
+          name="from"
+          required
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-sm"
+          [disabled]="isLoadingCities"
+          (ngModelChange)="onDepartureCityChange()"
+        >
+          <option [ngValue]="null" disabled selected>
+            Select Departure City
+          </option>
+          <option *ngFor="let city of cities" [ngValue]="city.id">
+            {{ city.name }} ({{ city.code }})
+          </option>
+        </select>
+        <p *ngIf="isLoadingCities" class="text-xs text-gray-500 italic">
+          Loading cities...
+        </p>
+      </div>
+
+      <div class="space-y-1">
+        <label for="to" class="block text-sm font-medium text-gray-700"
+          >To</label
+        >
+        <select
+          id="to"
+          [(ngModel)]="to"
+          name="to"
+          required
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-sm"
+          [disabled]="isLoadingCities || !from"
+        >
+          <option [ngValue]="null" disabled selected>
+            Select Arrival City
+          </option>
+          <ng-container *ngFor="let city of cities">
+            <option *ngIf="city.id !== from" [ngValue]="city.id">
+              {{ city.name }} ({{ city.code }})
+            </option>
+          </ng-container>
+        </select>
+        <p
+          *ngIf="!from && !isLoadingCities"
+          class="text-xs text-gray-500 italic"
+        >
+          Select departure city first.
+        </p>
+      </div>
+
+      <div class="space-y-1">
+        <label for="departDate" class="block text-sm font-medium text-gray-700"
+          >Depart</label
+        >
+        <input
+          type="date"
+          id="departDate"
+          [(ngModel)]="departDate"
+          name="departDate"
+          required
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all text-sm"
+          [min]="getTodayDate()"
+        />
+      </div>
+
+      <div class="space-y-1" *ngIf="tripType === 'round-trip'">
+        <label for="returnDate" class="block text-sm font-medium text-gray-700"
+          >Return</label
+        >
+        <input
+          type="date"
+          id="returnDate"
+          [(ngModel)]="returnDate"
+          name="returnDate"
+          [required]="tripType === 'round-trip'"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all text-sm"
+          [min]="departDate || getTodayDate()"
+          [disabled]="!departDate"
+        />
+        <p *ngIf="!departDate" class="text-xs text-gray-500 italic">
+          Select depart date first.
+        </p>
+      </div>
+      <div *ngIf="tripType === 'one-way'" class="hidden lg:block"></div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+      <div class="space-y-1">
+        <label
+          for="passengerCount"
+          class="block text-sm font-medium text-gray-700"
+          >Passengers</label
+        >
+        <input
+          type="number"
+          id="passengerCount"
+          [(ngModel)]="passengerCount"
+          name="passengerCount"
+          required
+          min="1"
+          max="9"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all text-sm"
+        />
+      </div>
+
+      <div class="space-y-1">
+        <label for="flightClass" class="block text-sm font-medium text-gray-700"
+          >Class</label
+        >
+        <select
+          id="flightClass"
+          [(ngModel)]="flightClass"
+          name="flightClass"
+          required
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-sm"
+        >
+          <option value="Economy">Economy</option>
+          <option value="Business">Business</option>
+          <option value="First">First</option>
+        </select>
+      </div>
+      <div class="hidden lg:block"></div>
+      <div class="hidden lg:block"></div>
+    </div>
+
+    <div class="pt-4 flex justify-end">
+      <button
+        type="submit"
+        class="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors duration-150 ease-in-out shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        [disabled]="
+          isLoadingCities ||
+          isLoadingFlights ||
+          !from ||
+          !to ||
+          !departDate ||
+          (tripType === 'round-trip' && !returnDate) ||
+          passengerCount < 1
+        "
+      >
+        <span *ngIf="!isLoadingFlights">Search Flights</span>
+        <span *ngIf="isLoadingFlights">Searching...</span>
+      </button>
+    </div>
+  </form>
+
+  <!-- Results Area -->
+  <div class="mt-4 flex-grow overflow-y-auto min-h-0">
+    <!-- Added mt-4, flex-grow, overflow-y-auto, min-h-0 -->
+    <!-- Loading Indicator -->
+    <div *ngIf="isLoadingFlights" class="text-center py-6">
+      <p class="text-gray-600">Loading flights...</p>
+      <div
+        class="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mt-2"
+      ></div>
+    </div>
+
+    <div class="mt-12">
+      <h2 class="text-2xl font-semibold mb-6 text-center text-gray-700">
+        Available Flights
+      </h2>
+
+      <!-- Loading Indicator -->
+      <div *ngIf="isLoadingFlights" class="text-center py-10">
+        <svg
+          class="animate-spin h-8 w-8 text-red-600 mx-auto"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+        <p class="mt-2 text-gray-600">Searching for flights...</p>
+      </div>
+
+      <!-- Error Message -->
+      <div
+        *ngIf="!isLoadingFlights && error"
+        class="p-4 mb-4 bg-red-100 border border-red-200 text-red-700 rounded-lg text-sm"
+      >
+        <strong>Error:</strong> {{ error }}
+      </div>
+
+      <!-- No Results Message (Specific) -->
+      <div
+        *ngIf="
+          !isLoadingFlights &&
+          availableFlights.length === 0 &&
+          submitted &&
+          !error
+        "
+        class="text-center py-10 px-4 bg-blue-50 text-blue-700 rounded-md shadow-sm"
+      >
+        <p>
+          No available flights found matching your criteria. Please try
+          different dates or destinations.
+        </p>
+      </div>
+
+      <div
+        *ngIf="!isLoadingFlights && availableFlights.length > 0"
+        class="space-y-4"
+      >
+        <div
+          *ngFor="let flight of availableFlights"
+          class="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col md:flex-row justify-between items-center"
+        >
+          <!-- Flight Details -->
+          <div class="flex-grow mb-4 md:mb-0 md:mr-4">
+            <p class="text-lg font-semibold text-red-700">
+              {{ flight.schedule.departure_city.name }} ({{
+                flight.schedule.departure_city.code
+              }})
+              <span class="text-gray-500 mx-2">&rarr;</span>
+              {{ flight.schedule.arrival_city.name }} ({{
+                flight.schedule.arrival_city.code
+              }})
+            </p>
+            <p class="text-sm text-gray-600">
+              Flight: {{ flight.schedule.flight_number }} | Departs:
+              <span class="font-medium">{{
+                flight.departure_time | date : "shortTime"
+              }}</span>
+              | Arrives:
+              <span class="font-medium">{{
+                flight.arrival_time | date : "shortTime"
+              }}</span>
+            </p>
+            <p class="text-sm text-gray-600">
+              Date:
+              <span class="font-medium">{{
+                flight.departure_time | date : "mediumDate"
+              }}</span>
+            </p>
+            <p class="text-sm text-gray-600">
+              Seats Available: {{ flight.total_available_seats }}
+            </p>
+          </div>
+
+          <!-- Price and Select Button -->
+          <div class="text-center md:text-right">
+            <!-- Display price based on selected class or just economy as default -->
+
+            <p class="text-xl font-bold text-green-600 mb-2">
+              <ng-container [ngSwitch]="flightClass">
+                <span *ngSwitchCase="'Economy'">
+                  {{ flight.economy_price | currency : "USD" }}
+                  <span class="text-sm font-normal text-gray-500">
+                    (Economy)</span
+                  >
+                </span>
+                <span *ngSwitchCase="'Business'">
+                  {{ flight.business_price | currency : "USD" }}
+                  <span class="text-sm font-normal text-gray-500">
+                    (Business)</span
+                  >
+                </span>
+                <span *ngSwitchCase="'First'">
+                  {{ flight.first_price | currency : "USD" }}
+                  <span class="text-sm font-normal text-gray-500">
+                    (First)</span
+                  >
+                </span>
+                <span *ngSwitchDefault>
+                  {{ flight.economy_price | currency : "USD" }}
+                  <span class="text-sm font-normal text-gray-500">
+                    (Economy)</span
+                  >
+                </span>
+              </ng-container>
+            </p>
+
+            <!-- Select Button -->
+            <button
+              (click)="selectFlight(flight)"
+              class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out"
+            >
+              Select Flight
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results List Container -->
+      <div
+        *ngIf="!isLoadingFlights && availableFlights.length > 0"
+        class="space-y-4"
+      >
+        <!-- This loop displays the flights returned by the backend -->
+        <div
+          *ngFor="let flight of availableFlights"
+          class="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col md:flex-row justify-between items-center"
+        >
+          <!-- ... flight details display ... -->
+        </div>
+      </div>
+      <!-- End of inner results container -->
+
+      <!-- No Results Message -->
+      <div
+        *ngIf="
+          !isLoadingFlights &&
+          !error &&
+          availableFlights.length === 0 &&
+          submitted
+        "
+        class="text-center py-6 text-gray-500"
+      >
+        <p>No flights found matching your criteria.</p>
+      </div>
+    </div>
+    <!-- End of results area wrapper -->
+  </div>
+  <!-- End of component container -->
+</div>

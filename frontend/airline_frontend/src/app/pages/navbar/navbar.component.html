@@ -1,0 +1,89 @@
+<nav
+  class="bg-gradient-to-r from-red-700 to-red-500 shadow-md sticky top-0 z-50"
+>
+  <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+    <!-- Logo -->
+    <div class="text-xl font-bold text-white">
+      <a routerLink="/">
+        <img
+          src="https://cdn-icons-png.flaticon.com/512/11378/11378287.png"
+          alt="Airline Logo"
+          class="h-8 inline mr-2"
+        />
+        Ludensberg Airlines
+      </a>
+    </div>
+
+    <!-- Navigation Links -->
+    <ul class="flex space-x-6 items-center">
+      <li>
+        <a
+          routerLink="/"
+          class="text-white hover:text-red-100 transition duration-150 ease-in-out"
+          >Home</a
+        >
+      </li>
+      <li>
+        <!-- Update this link -->
+        <a
+          routerLink="/booking"
+          class="text-white hover:text-red-100 transition duration-150 ease-in-out"
+          >Book Flight</a
+        >
+      </li>
+
+      <!-- Added link for All Flights -->
+      <li>
+        <a
+          routerLink="/flights"
+          class="text-white hover:text-red-100 transition duration-150 ease-in-out"
+          >All Flights</a
+        >
+      </li>
+
+      <!-- Conditional Links based on Auth Status -->
+      <!-- Use the async pipe with the observable -->
+      <ng-container *ngIf="isAuthenticated$ | async; else loggedOutLinks">
+        <li>
+          <a
+            routerLink="/bookings"
+            class="text-white hover:text-red-100 transition duration-150 ease-in-out"
+            >My Bookings</a
+          >
+        </li>
+        <li>
+          <a
+            routerLink="/profile"
+            class="text-white hover:text-red-100 transition duration-150 ease-in-out"
+            >Profile</a
+          >
+        </li>
+        <li>
+          <button
+            (click)="logout()"
+            class="bg-white text-red-600 px-4 py-1 rounded hover:bg-red-100 transition duration-150 ease-in-out text-sm font-medium"
+          >
+            Logout
+          </button>
+        </li>
+      </ng-container>
+
+      <ng-template #loggedOutLinks>
+        <li>
+          <a
+            routerLink="/login"
+            class="text-white hover:text-red-100 transition duration-150 ease-in-out"
+            >Login</a
+          >
+        </li>
+        <li>
+          <a
+            routerLink="/register"
+            class="bg-white text-red-600 px-4 py-1 rounded hover:bg-red-100 transition duration-150 ease-in-out text-sm font-medium"
+            >Register</a
+          >
+        </li>
+      </ng-template>
+    </ul>
+  </div>
+</nav>

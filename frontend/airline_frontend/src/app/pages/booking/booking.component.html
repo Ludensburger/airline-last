@@ -1,0 +1,191 @@
+<div class="container mx-auto px-4 py-8">
+  <h2 class="text-3xl font-bold mb-6 text-center text-red-700">
+    Book Your Flight
+  </h2>
+
+  <!-- Display Selected Flight Info -->
+  <div *ngIf="selectedFlight" class="mb-8 p-6 bg-red-50 rounded-lg shadow">
+    <h3 class="text-xl font-semibold mb-3 text-red-800">
+      Selected Flight Details
+    </h3>
+    <p>
+      <strong>Flight Number:</strong>
+      {{ selectedFlight.schedule?.flight_number }}
+    </p>
+    <p>
+      <strong>From:</strong>
+      {{ selectedFlight.schedule?.departure_city?.name }} ({{
+        selectedFlight.schedule?.departure_city?.code
+      }})
+    </p>
+    <p>
+      <strong>To:</strong> {{ selectedFlight.schedule?.arrival_city?.name }} ({{
+        selectedFlight.schedule?.arrival_city?.code
+      }})
+    </p>
+    <p>
+      <strong>Departure:</strong>
+      {{ selectedFlight.departure_time | date : "medium" }}
+    </p>
+    <p>
+      <strong>Arrival:</strong>
+      {{ selectedFlight.arrival_time | date : "medium" }}
+    </p>
+    <!-- Display Price based on selected class -->
+    <p *ngIf="flightClass === 'Economy'">
+      <strong>Price (Economy):</strong>
+      {{ selectedFlight.economy_price | currency : "USD" }} per seat
+    </p>
+    <p *ngIf="flightClass === 'Business'">
+      <strong>Price (Business):</strong>
+      {{ selectedFlight.business_price | currency : "USD" }} per seat
+    </p>
+    <p *ngIf="flightClass === 'First'">
+      <strong>Price (First):</strong>
+      {{ selectedFlight.first_price | currency : "USD" }} per seat
+    </p>
+    <!-- Display passenger count and class from search -->
+    <p><strong>Passengers:</strong> {{ passengerCount }}</p>
+    <p><strong>Class:</strong> {{ flightClass }}</p>
+    <!-- Removed total_available_seats as it might be confusing with class-specific availability -->
+    <!-- <p><strong>Seats Available:</strong> {{ selectedFlight.total_available_seats }}</p> -->
+  </div>
+
+  <div
+    *ngIf="!selectedFlight"
+    class="mb-8 p-6 bg-yellow-100 text-yellow-800 rounded-lg shadow"
+  >
+    <p>
+      No flight selected. Please
+      <a routerLink="/search" class="font-semibold underline"
+        >search for a flight</a
+      >
+      first.
+    </p>
+  </div>
+
+  <!-- Booking Form -->
+  <form
+    *ngIf="selectedFlight && !successMessage"
+    (ngSubmit)="submitBooking()"
+    class="max-w-lg mx-auto bg-white p-8 rounded-lg shadow-md"
+  >
+    <h3 class="text-xl font-semibold mb-6 text-gray-700">
+      Passenger & Booking Details
+    </h3>
+
+    <!-- Passenger Name -->
+    <div class="mb-4">
+      <label for="passengerName" class="block text-gray-700 font-medium mb-2"
+        >Lead Passenger Full Name</label
+      >
+      <input
+        type="text"
+        id="passengerName"
+        name="passengerName"
+        [(ngModel)]="passengerName"
+        required
+        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+        placeholder="Enter lead passenger's full name"
+      />
+    </div>
+
+    <!-- Passenger Email -->
+    <div class="mb-4">
+      <label for="passengerEmail" class="block text-gray-700 font-medium mb-2"
+        >Lead Passenger Email Address</label
+      >
+      <input
+        type="email"
+        id="passengerEmail"
+        name="passengerEmail"
+        [(ngModel)]="passengerEmail"
+        required
+        email
+        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+        placeholder="Enter lead passenger's email"
+      />
+    </div>
+
+    <!-- Number of Seats (Passenger Count) - Display Only -->
+    <div class="mb-4">
+      <label class="block text-gray-700 font-medium mb-2"
+        >Number of Seats</label
+      >
+      <input
+        type="number"
+        [value]="passengerCount"
+        disabled
+        class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
+      />
+      <p class="text-sm text-gray-500 mt-1">
+        Passenger count is determined by your search.
+      </p>
+    </div>
+
+    <!-- Seat Class - Display Only -->
+    <div class="mb-6">
+      <label class="block text-gray-700 font-medium mb-2">Seat Class</label>
+      <input
+        type="text"
+        [value]="flightClass"
+        disabled
+        class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-100 cursor-not-allowed"
+      />
+      <p class="text-sm text-gray-500 mt-1">
+        Seat class is determined by your search.
+      </p>
+    </div>
+
+    <!-- Add more fields for passenger details as needed -->
+    <!-- e.g., Phone Number, Additional Passengers -->
+
+    <!-- Error Message -->
+    <div
+      *ngIf="error"
+      class="mb-4 p-3 bg-red-100 text-red-700 rounded-md text-sm"
+    >
+      {{ error }}
+    </div>
+
+    <!-- Submit Button -->
+    <button
+      type="submit"
+      [disabled]="
+        isLoading || !passengerName || !passengerEmail || passengerCount < 1
+      "
+      class="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+    >
+      <svg
+        *ngIf="isLoading"
+        class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+      >
+        <circle
+          class="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          stroke-width="4"
+        ></circle>
+        <path
+          class="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+        ></path>
+      </svg>
+      {{ isLoading ? "Processing..." : "Confirm Booking" }}
+    </button>
+  </form>
+
+  <!-- Success Message -->
+  <div
+    *ngIf="successMessage"
+    class="mt-6 max-w-lg mx-auto p-4 bg-green-100 text-green-700 rounded-md text-center shadow-md"
+  >
+    {{ successMessage }} Redirecting to My Bookings...
+  </div>
+</div>

@@ -1,0 +1,53 @@
+/* Basic layout styles - adjust as needed */
+.card-body {
+    padding: 1rem;
+}
+
+.search-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.search-form {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.form-group {
+    flex: 1;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.2rem;
+    font-size: 0.9rem;
+}
+
+.form-control,
+.form-select {
+    padding: 0.3rem;
+    font-size: 0.9rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.search-button-container {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.search-button {
+    padding: 0.5rem 1rem;
+    background-color: #dc3545;
+    /* Use your airline red */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.search-button:hover {
+    background-color: #c82333;
+}
