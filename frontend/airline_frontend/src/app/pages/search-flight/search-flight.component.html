@@ -1,8 +1,5 @@
 <div class="container mx-auto md:p-8 flex flex-col flex-grow min-h-0">
-  <!-- Added flex flex-col flex-grow min-h-0 -->
-  <!-- Header -->
   <div class="flex items-center mb-6 flex-shrink-0">
-    <!-- Added flex-shrink-0 -->
     <img
       src="https://cdn-icons-png.flaticon.com/512/11378/11378287.png"
       alt="Flight Icon"
@@ -11,12 +8,10 @@
     <h2 class="text-2xl font-bold text-gray-800">Search Flights</h2>
   </div>
 
-  <!-- Form -->
   <form
     (ngSubmit)="searchFlights()"
     class="p-6 bg-white rounded-lg shadow-md space-y-6 border border-gray-200 flex-shrink-0 sticky top-0 z-10"
   >
-    <!-- ... (form content remains the same) ... -->
     <div class="flex items-center space-x-4">
       <label class="text-sm font-medium text-gray-700">Trip Type:</label>
       <button
@@ -50,48 +45,47 @@
         <label for="from" class="block text-sm font-medium text-gray-700"
           >From</label
         >
-        <select
+        <input
+          list="departureCities"
           id="from"
-          [(ngModel)]="from"
-          name="from"
+          [(ngModel)]="fromCity"
+          name="fromCity"
           required
           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-sm"
           [disabled]="isLoadingCities"
-          (ngModelChange)="onDepartureCityChange()"
-        >
-          <option [ngValue]="null" disabled selected>
-            Select Departure City
-          </option>
-          <option *ngFor="let city of cities" [ngValue]="city.id">
+          (input)="onDepartureCityInput()"
+        />
+        <datalist id="departureCities">
+          <option *ngFor="let city of cities" [value]="city.name">
             {{ city.name }} ({{ city.code }})
           </option>
-        </select>
+        </datalist>
         <p *ngIf="isLoadingCities" class="text-xs text-gray-500 italic">
           Loading cities...
         </p>
       </div>
 
+      <!-- ...existing code... -->
+
       <div class="space-y-1">
         <label for="to" class="block text-sm font-medium text-gray-700"
           >To</label
         >
-        <select
+        <input
+          list="arrivalCities"
           id="to"
-          [(ngModel)]="to"
-          name="to"
+          [(ngModel)]="toCity"
+          name="toCity"
           required
           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all bg-white text-sm"
           [disabled]="isLoadingCities || !from"
-        >
-          <option [ngValue]="null" disabled selected>
-            Select Arrival City
+          (input)="onArrivalCityInput()"
+        />
+        <datalist id="arrivalCities">
+          <option *ngFor="let city of arrivalCities" [value]="city.name">
+            {{ city.name }} ({{ city.code }})
           </option>
-          <ng-container *ngFor="let city of cities">
-            <option *ngIf="city.id !== from" [ngValue]="city.id">
-              {{ city.name }} ({{ city.code }})
-            </option>
-          </ng-container>
-        </select>
+        </datalist>
         <p
           *ngIf="!from && !isLoadingCities"
           class="text-xs text-gray-500 italic"
@@ -195,10 +189,7 @@
     </div>
   </form>
 
-  <!-- Results Area -->
   <div class="mt-4 flex-grow overflow-y-auto min-h-0">
-    <!-- Added mt-4, flex-grow, overflow-y-auto, min-h-0 -->
-    <!-- Loading Indicator -->
     <div *ngIf="isLoadingFlights" class="text-center py-6">
       <p class="text-gray-600">Loading flights...</p>
       <div
@@ -211,7 +202,6 @@
         Available Flights
       </h2>
 
-      <!-- Loading Indicator -->
       <div *ngIf="isLoadingFlights" class="text-center py-10">
         <svg
           class="animate-spin h-8 w-8 text-red-600 mx-auto"
@@ -236,7 +226,6 @@
         <p class="mt-2 text-gray-600">Searching for flights...</p>
       </div>
 
-      <!-- Error Message -->
       <div
         *ngIf="!isLoadingFlights && error"
         class="p-4 mb-4 bg-red-100 border border-red-200 text-red-700 rounded-lg text-sm"
@@ -244,7 +233,6 @@
         <strong>Error:</strong> {{ error }}
       </div>
 
-      <!-- No Results Message (Specific) -->
       <div
         *ngIf="
           !isLoadingFlights &&
@@ -268,7 +256,6 @@
           *ngFor="let flight of availableFlights"
           class="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col md:flex-row justify-between items-center"
         >
-          <!-- Flight Details -->
           <div class="flex-grow mb-4 md:mb-0 md:mr-4">
             <p class="text-lg font-semibold text-red-700">
               {{ flight.schedule.departure_city.name }} ({{
@@ -300,10 +287,7 @@
             </p>
           </div>
 
-          <!-- Price and Select Button -->
           <div class="text-center md:text-right">
-            <!-- Display price based on selected class or just economy as default -->
-
             <p class="text-xl font-bold text-green-600 mb-2">
               <ng-container [ngSwitch]="flightClass">
                 <span *ngSwitchCase="'Economy'">
@@ -333,7 +317,6 @@
               </ng-container>
             </p>
 
-            <!-- Select Button -->
             <button
               (click)="selectFlight(flight)"
               class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-150 ease-in-out"
@@ -344,22 +327,15 @@
         </div>
       </div>
 
-      <!-- Results List Container -->
       <div
         *ngIf="!isLoadingFlights && availableFlights.length > 0"
         class="space-y-4"
       >
-        <!-- This loop displays the flights returned by the backend -->
         <div
           *ngFor="let flight of availableFlights"
           class="bg-white p-4 rounded-lg shadow-md border border-gray-200 flex flex-col md:flex-row justify-between items-center"
-        >
-          <!-- ... flight details display ... -->
-        </div>
+        ></div>
       </div>
-      <!-- End of inner results container -->
-
-      <!-- No Results Message -->
       <div
         *ngIf="
           !isLoadingFlights &&
@@ -372,7 +348,5 @@
         <p>No flights found matching your criteria.</p>
       </div>
     </div>
-    <!-- End of results area wrapper -->
   </div>
-  <!-- End of component container -->
 </div>

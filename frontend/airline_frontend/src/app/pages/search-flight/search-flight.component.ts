@@ -1,10 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-// Import HttpParams along with HttpClient
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { environment } from '../../../environments/environment'; // Adjusted path to environment variable
+import { environment } from '../../../environments/environment';
 import {
   Observable,
   expand,
@@ -12,33 +11,33 @@ import {
   EMPTY,
   catchError,
   throwError,
-} from 'rxjs'; // Import RxJS operators
+} from 'rxjs';
 
 interface Flight {
   id: number;
   schedule: {
-    id: number; // Schedule ID
+    id: number;
     flight_number: string;
     departure_city: { id: number; code: string; name: string };
     arrival_city: { id: number; code: string; name: string };
-    departure_city_id: number; // Added ID
-    arrival_city_id: number; // Added ID
+    departure_city_id: number;
+    arrival_city_id: number;
     typical_departure_time: string;
-    typical_arrival_time: string; // Duration string
+    typical_arrival_time: string;
     operating_days: string[];
     total_seats: number;
     economy_seats: number;
     business_seats: number;
     first_seats: number;
   };
-  departure_time: string; // ISO format string or formatted string
-  arrival_time: string; // ISO format string or formatted string
+  departure_time: string;
+  arrival_time: string;
   economy_seats_available: number;
   business_seats_available: number;
   first_seats_available: number;
-  economy_price: string; // Decimal as string
-  business_price: string; // Decimal as string
-  first_price: string; // Decimal as string
+  economy_price: string;
+  business_price: string;
+  first_price: string;
   total_available_seats: number;
   is_full: boolean;
 }
@@ -47,20 +46,19 @@ interface PaginatedResponse<T> {
   count: number;
   next: string | null;
   previous: string | null;
-  results: T[]; // The actual data array
+  results: T[];
 }
 
 interface City {
   id: number;
   code: string;
   name: string;
-  country?: { id: number; name: string }; // Nested country object if included
+  country?: { id: number; name: string };
 }
 
 @Component({
   selector: 'app-search-flight',
   standalone: true,
-  // Remove deprecated HttpClientModule. HttpClient is available via provideHttpClient() in app config.
   imports: [CommonModule, FormsModule],
   providers: [DatePipe],
   templateUrl: './search-flight.component.html',
@@ -69,60 +67,50 @@ interface City {
 export class SearchFlightComponent implements OnInit {
   submitted: boolean = false;
   tripType: 'round-trip' | 'one-way' = 'round-trip';
-  from: number | null = null;
-  to: number | null = null;
+  from: number | null = null; // Store departure city ID
+  to: number | null = null; // Store arrival city ID
+  fromCity: string = ''; // Store departure city name for display
+  toCity: string = ''; // Store arrival city name for display
   departDate: string = '';
   returnDate: string = '';
-  flightClass: string = 'Economy'; // Default value
-  passengerCount: number = 1; // Default value
+  flightClass: string = 'Economy';
+  passengerCount: number = 1;
   availableFlights: Flight[] = [];
   cities: City[] = [];
   isLoadingFlights: boolean = false;
   isLoadingCities: boolean = false;
   error: string | null = null;
-  // Use environment variable for API URL
-  private apiUrl = environment.apiUrl; // Use environment.apiUrl
+  private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient, private router: Router) {} // Inject Router
+  constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit(): void {
-    this.loadAllCities(); // Call the new function to load all cities
-    // Optionally load all flights initially, or wait for search criteria
-    // this.loadFlights(); // Uncomment if you want to load all flights on init
+    this.loadAllCities();
   }
 
-  /**
-   * Fetches a single page of cities.
-   * @param url The URL to fetch cities from (including pagination parameters).
-   */
   private fetchCitiesPage(url: string): Observable<PaginatedResponse<City>> {
     console.log('Requesting cities page with URL:', url);
     return this.http.get<PaginatedResponse<City>>(url).pipe(
       catchError((err) => {
         console.error('Error loading a page of cities:', err);
         this.error = 'Failed to load city data. Please try again later.';
-        this.isLoadingCities = false; // Ensure loading state is reset on error
-        return throwError(() => new Error('Failed to load city data page.')); // Propagate error
+        this.isLoadingCities = false;
+        return throwError(() => new Error('Failed to load city data page.'));
       })
     );
   }
 
-  /**
-   * Fetches all pages of cities recursively using RxJS operators.
-   */
   loadAllCities(): void {
     this.isLoadingCities = true;
     this.error = null;
-    this.cities = []; // Clear existing cities
-    const initialUrl = `${this.apiUrl}/cities/?page_size=100`; // Start with a larger page size
+    this.cities = [];
+    const initialUrl = `${this.apiUrl}/cities/?page_size=100`;
 
     this.fetchCitiesPage(initialUrl)
       .pipe(
-        expand((response) => {
-          // If there's a next page URL, fetch it; otherwise, complete.
-          return response.next ? this.fetchCitiesPage(response.next) : EMPTY;
-        }),
-        // Accumulate results from all pages.
+        expand((response) =>
+          response.next ? this.fetchCitiesPage(response.next) : EMPTY
+        ),
         reduce((acc, response) => acc.concat(response.results), [] as City[])
       )
       .subscribe({
@@ -132,24 +120,18 @@ export class SearchFlightComponent implements OnInit {
           this.isLoadingCities = false;
         },
         error: (err) => {
-          // Error handling is done within fetchCitiesPage, but log final error if needed
           console.error('Failed to load all cities:', err);
-          // Error message is already set in fetchCitiesPage
           this.isLoadingCities = false;
         },
       });
   }
 
-  /**
-   * Fetches flights based on search criteria.
-   */
   loadFlights(): void {
     this.isLoadingFlights = true;
     this.error = null;
-    this.availableFlights = []; // Clear previous results
-    this.submitted = true; // Mark that a search has been attempted
+    this.availableFlights = [];
+    this.submitted = true;
 
-    // --- Build Search Parameters ---
     let params = new HttpParams();
     if (this.from) {
       params = params.set('departure_city_id', this.from.toString());
@@ -158,19 +140,14 @@ export class SearchFlightComponent implements OnInit {
       params = params.set('arrival_city_id', this.to.toString());
     }
     if (this.departDate) {
-      // Ensure date is in YYYY-MM-DD format if backend expects it
       params = params.set('departure_date', this.departDate);
     }
-    // Add passenger count and flight class
     if (this.passengerCount > 0) {
       params = params.set('passenger_count', this.passengerCount.toString());
     }
     if (this.flightClass) {
       params = params.set('flight_class', this.flightClass);
     }
-    // Note: Handling returnDate for round-trip might require a different endpoint
-    // or two separate API calls depending on backend implementation.
-    // This example only searches based on departure date.
 
     const searchUrl = `${this.apiUrl}/flights/search/`;
     console.log(
@@ -180,27 +157,16 @@ export class SearchFlightComponent implements OnInit {
       params.toString()
     );
 
-    // Assuming the search endpoint is also paginated, but for simplicity,
-    // we'll fetch the first page here. Implement pagination similar to loadAllCities if needed.
     this.http
-      .get<PaginatedResponse<Flight>>(searchUrl, { params: params }) // Pass params object
+      .get<PaginatedResponse<Flight>>(searchUrl, { params: params })
       .subscribe({
         next: (data) => {
-          // Filter out flights where is_full is true (Frontend fallback)
-          // Ideally, the backend should filter based on passenger_count and class availability.
           this.availableFlights = data.results.filter(
             (flight) => !flight.is_full
           );
-          console.log(
-            'Flights loaded (filtered for is_full):',
-            this.availableFlights
-          );
-
+          console.log('Flights loaded:', this.availableFlights);
           if (this.availableFlights.length === 0 && this.submitted) {
-            console.log(
-              'No available (non-full) flights found for the given criteria.'
-            );
-            this.error = 'No flights match your search criteria.'; // More specific message
+            this.error = 'No flights match your search criteria.';
           }
           this.isLoadingFlights = false;
         },
@@ -217,43 +183,63 @@ export class SearchFlightComponent implements OnInit {
       });
   }
 
-  /**
-   * Handles changes to the departure city selection.
-   * Resets the arrival city if it's the same as the new departure city.
-   */
+  onDepartureCityInput(): void {
+    const selectedDepartureName = this.fromCity;
+    const foundCity = this.cities.find(
+      (city) =>
+        city.name === selectedDepartureName ||
+        city.code === selectedDepartureName
+    );
+    this.from = foundCity ? foundCity.id : null; // Store the City ID
+    console.log(
+      'Departure city input:',
+      selectedDepartureName,
+      'ID set to:',
+      this.from
+    );
+    this.onDepartureCityChange();
+  }
+
+  onArrivalCityInput(): void {
+    const selectedArrivalName = this.toCity;
+    const foundCity = this.cities.find(
+      (city) =>
+        city.name === selectedArrivalName || city.code === selectedArrivalName
+    );
+    this.to = foundCity ? foundCity.id : null; // Store the City ID
+    console.log(
+      'Arrival city input:',
+      selectedArrivalName,
+      'ID set to:',
+      this.to
+    );
+  }
+
   onDepartureCityChange(): void {
     console.log(`Departure city changed. New 'from' value: ${this.from}`);
     console.log(`Current 'to' value before check: ${this.to}`);
     if (this.to !== null && this.to === this.from) {
       console.log(`Match found! Resetting 'to' city from ${this.to} to null.`);
-      this.to = null; // Reset arrival city
+      this.to = null;
+      this.toCity = '';
     } else {
       console.log(`No match or 'to' is null. No reset needed.`);
     }
-    // Also reset return date if depart date is cleared or changed? (Optional)
   }
 
-  /**
-   * Triggered when the search form is submitted.
-   */
   searchFlights(): void {
-    console.log('Search button clicked. Current criteria:');
-    console.log({
+    console.log('Search button clicked. Current criteria:', {
       tripType: this.tripType,
       fromCityId: this.from,
       toCityId: this.to,
       departDate: this.departDate,
-      returnDate: this.returnDate, // Still logged, but not used in current search logic
+      returnDate: this.returnDate,
       flightClass: this.flightClass,
       passengerCount: this.passengerCount,
     });
-    // Call loadFlights to perform the search based on current form values
     this.loadFlights();
   }
 
-  /**
-   * Gets today's date in YYYY-MM-DD format for min attribute of date inputs.
-   */
   getTodayDate(): string {
     const today = new Date();
     const month = (today.getMonth() + 1).toString().padStart(2, '0');
@@ -261,14 +247,8 @@ export class SearchFlightComponent implements OnInit {
     return `${today.getFullYear()}-${month}-${day}`;
   }
 
-  /**
-   * Navigates to the booking page with the selected flight's data,
-   * passenger count, and flight class.
-   * @param flight The flight object selected by the user.
-   */
   selectFlight(flight: Flight): void {
     console.log('Selected flight:', flight);
-    // Navigate to the booking route and pass the flight object, passenger count, and class
     this.router.navigate(['/booking'], {
       state: {
         flight: flight,
@@ -276,5 +256,10 @@ export class SearchFlightComponent implements OnInit {
         flightClass: this.flightClass,
       },
     });
+  }
+
+  // Helper function to filter cities for the arrival dropdown
+  get arrivalCities(): City[] {
+    return this.cities.filter((city) => city.id !== this.from);
   }
 }

@@ -1,8 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
+
 # Auth models
 from .models.auth import BaseUser, AdminUser, CustomerUser
+
 
 # Location models
 from .models.location import Country, City
@@ -78,4 +80,3 @@ class BookingAdmin(admin.ModelAdmin):
         return obj.flight.schedule.flight_number if obj.flight and obj.flight.schedule else "N/A"
     get_flight_number.short_description = 'Flight Number'
     
-
