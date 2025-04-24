@@ -3,13 +3,20 @@
     All Available Flights
   </h2>
 
-  <!-- Loading Indicator -->
-  <div *ngIf="isLoading" class="text-center py-10">
-    <p class="text-lg text-gray-600">Loading flights...</p>
-    <!-- Optional: Add a spinner SVG or component -->
+  <div class="mb-4">
+    <input
+      type="text"
+      placeholder="Search by Flight No., From City, or To City"
+      class="w-full px-4 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+      [(ngModel)]="searchTerm"
+      (input)="filterFlights()"
+    />
   </div>
 
-  <!-- Error Message -->
+  <div *ngIf="isLoading" class="text-center py-10">
+    <p class="text-lg text-gray-600">Loading flights...</p>
+  </div>
+
   <div
     *ngIf="error && !isLoading"
     class="mb-6 p-4 bg-red-100 text-red-700 rounded-md text-center shadow-md"
@@ -17,13 +24,12 @@
     {{ error }}
   </div>
 
-  <!-- Flight List -->
   <div
-    *ngIf="!isLoading && !error && flights.length > 0"
+    *ngIf="!isLoading && !error && filteredFlights.length > 0"
     class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
   >
     <div
-      *ngFor="let flight of flights"
+      *ngFor="let flight of filteredFlights"
       class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow duration-200"
     >
       <div class="p-6">
@@ -44,7 +50,6 @@
         </p>
         <p class="text-sm text-gray-600 mb-1">
           <strong>Departure:</strong>
-          <!-- Using ?? 'N/A' as fallback for the pipe result if date is invalid/null -->
           {{ (flight.departure_time | date : "medium") ?? "N/A" }}
         </p>
         <p class="text-sm text-gray-600 mb-4">
@@ -54,7 +59,6 @@
         <div class="border-t pt-4 mt-4">
           <p class="text-sm text-gray-800 mb-1">
             <strong>Economy:</strong>
-            <!-- Corrected property name: economy_seats_available -->
             {{ flight.economy_price | currency : "USD" }} ({{
               flight.economy_seats_available ?? 0
             }}
@@ -62,7 +66,6 @@
           </p>
           <p class="text-sm text-gray-800 mb-1">
             <strong>Business:</strong>
-            <!-- Corrected property name: business_seats_available -->
             {{ flight.business_price | currency : "USD" }} ({{
               flight.business_seats_available ?? 0
             }}
@@ -70,16 +73,13 @@
           </p>
           <p class="text-sm text-gray-800">
             <strong>First:</strong>
-            <!-- Corrected property name: first_seats_available -->
             {{ flight.first_price | currency : "USD" }} ({{
               flight.first_seats_available ?? 0
             }}
             seats)
           </p>
         </div>
-        <!-- Optional: Add a button to navigate to booking -->
         <div class="mt-4 text-center">
-          <!-- Corrected routerLink path to '/booking' -->
           <a
             [routerLink]="['/booking']"
             [state]="{
@@ -91,7 +91,6 @@
           >
             Book Economy
           </a>
-          <!-- Corrected routerLink path to '/booking' -->
           <a
             [routerLink]="['/booking']"
             [state]="{
@@ -103,7 +102,6 @@
           >
             Book Business
           </a>
-          <!-- Corrected routerLink path to '/booking' -->
           <a
             [routerLink]="['/booking']"
             [state]="{
@@ -120,7 +118,15 @@
     </div>
   </div>
 
-  <!-- No Flights Found Message -->
+  <div
+    *ngIf="!isLoading && !error && filteredFlights.length === 0"
+    class="text-center py-10"
+  >
+    <p class="text-lg text-gray-600">
+      No flights found matching your search criteria.
+    </p>
+  </div>
+
   <div
     *ngIf="!isLoading && !error && flights.length === 0"
     class="text-center py-10"
