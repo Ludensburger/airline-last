@@ -12,14 +12,15 @@ import { HttpErrorResponse } from '@angular/common/http';
   imports: [CommonModule, FormsModule],
   providers: [DatePipe],
   templateUrl: './booking.component.html',
-  styleUrls: ['./booking.component.css'],
+  styleUrls: ['./booking.component.css'], // Make sure to include the CSS
 })
 export class BookingComponent implements OnInit {
   selectedFlight: any = null;
-  passengerName: string = '';
+  passengerNames: string[] = [];
   passengerEmail: string = '';
   flightClass: string = 'Economy';
   passengerCount: number = 1;
+  confirmationId: string = ''; // Add confirmationId
 
   isLoading = false;
   error: string | null = null;
@@ -37,6 +38,8 @@ export class BookingComponent implements OnInit {
     this.selectedFlight = state?.flight;
     this.passengerCount = state?.passengerCount ?? 1;
     this.flightClass = state?.flightClass ?? 'Economy';
+
+    this.passengerNames = Array(this.passengerCount).fill('');
 
     if (!this.selectedFlight) {
       console.warn(
@@ -59,6 +62,10 @@ export class BookingComponent implements OnInit {
     }
   }
 
+  getPassengerArray(): number[] {
+    return Array(this.passengerCount);
+  }
+
   submitBooking(): void {
     if (
       !this.selectedFlight?.schedule?.flight_number ||
@@ -68,8 +75,12 @@ export class BookingComponent implements OnInit {
         'Selected flight data is incomplete (missing flight number or departure time).';
       return;
     }
-    if (!this.passengerName || !this.passengerEmail) {
-      this.error = 'Please fill in all required passenger details.';
+    if (this.passengerNames.some((name) => !name.trim())) {
+      this.error = 'Please fill in the full name for all passengers.';
+      return;
+    }
+    if (!this.passengerEmail) {
+      this.error = "Please enter the lead passenger's email address.";
       return;
     }
     if (this.passengerCount < 1) {
@@ -104,20 +115,22 @@ export class BookingComponent implements OnInit {
       flight_number: this.selectedFlight.schedule.flight_number,
       departure_date: departureDateStr,
       seats_booked: this.passengerCount,
-      seat_class: this.flightClass.toLowerCase(), // Send as lowercase ('economy', 'business', 'first')
+      seat_class: this.flightClass.toLowerCase(),
+      passenger_details: this.passengerNames.map((name, index) => ({
+        name: name.trim(),
+        is_lead: index === 0,
+        email: index === 0 ? this.passengerEmail : null,
+      })),
     };
 
-    console.log(
-      'Submitting booking data to add-by-flight-number:',
-      bookingData // Verify lowercase in console
-    );
+    console.log('Submitting booking data with passenger details:', bookingData);
 
     this.bookingService.createBookingByFlightNumber(bookingData).subscribe({
       next: (response) => {
         console.log('Booking successful:', response);
+        this.generateConfirmationId(); // Generate ID on successful submission
         this.isLoading = false;
-        this.successMessage = 'Booking confirmed successfully!';
-        setTimeout(() => this.router.navigate(['/bookings']), 2000);
+        this.successMessage = 'E-Ticket Generated!';
       },
       error: (err: HttpErrorResponse) => {
         console.error('Booking failed:', err);
@@ -157,8 +170,27 @@ export class BookingComponent implements OnInit {
   }
 
   resetForm(): void {
-    this.passengerName = '';
+    this.passengerNames = Array(this.passengerCount).fill('');
     this.passengerEmail = '';
     this.flightClass = 'Economy';
+  }
+
+  navigateToBookings(): void {
+    this.router.navigate(['/bookings']);
+  }
+
+  generateConfirmationId(): void {
+    const flightNumber = this.selectedFlight?.schedule?.flight_number || '000';
+    const departureCityCode =
+      this.selectedFlight?.schedule?.departure_city?.code || 'XXX';
+    const arrivalCityCode =
+      this.selectedFlight?.schedule?.arrival_city?.code || 'YYY';
+    const date = new Date(this.selectedFlight?.departure_time || Date.now());
+    const formattedDate = `${date.getFullYear()}${(date.getMonth() + 1)
+      .toString()
+      .padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+    const randomPart = Math.floor(1000 + Math.random() * 9000);
+
+    this.confirmationId = `${flightNumber}-${departureCityCode}-${arrivalCityCode}-${formattedDate}-${randomPart}`;
   }
 }
